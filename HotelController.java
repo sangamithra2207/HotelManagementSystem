@@ -1,68 +1,66 @@
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
 class HotelController {
 
-    Room[] rooms;
-    int count;
+    Connection con;
 
-    HotelController(int size) {
+    HotelController() {
 
-        rooms = new Room[size];
-        count = 0;
+        con = DBConnection.getConnection();
     }
 
-    void addRoom(int roomNo, String customerName) {
+    void addRoom(int roomNo, String customerName, boolean booked) {
 
-        rooms[count++] = new Room(roomNo, customerName);
+        try {
+
+            String query =
+                    "INSERT INTO rooms VALUES (?, ?, ?)";
+
+            PreparedStatement pst =
+                    con.prepareStatement(query);
+
+            pst.setInt(1, roomNo);
+            pst.setString(2, customerName);
+            pst.setBoolean(3, booked);
+
+            pst.executeUpdate();
+
+            System.out.println("Room Added Successfully");
+
+        } catch (Exception e) {
+
+            System.out.println(e);
+        }
     }
 
-    Room[] getRooms() {
-        return rooms;
-    }
+    void displayRooms() {
 
-    int getCount() {
-        return count;
-    }
+        try {
 
-    Room findRoom(String customerName) {
+            String query = "SELECT * FROM rooms";
 
-        for (int i = 0; i < count; i++) {
+            Statement st = con.createStatement();
 
-            if (rooms[i].customerName.equalsIgnoreCase(customerName)) {
-                return rooms[i];
+            ResultSet rs = st.executeQuery(query);
+
+            System.out.println("\nRoom Details:");
+
+            while (rs.next()) {
+
+                System.out.println(
+                        rs.getInt("room_no") + " - " +
+                        rs.getString("customer_name") + " - " +
+                        (rs.getBoolean("booked")
+                                ? "Booked"
+                                : "Available"));
             }
+
+        } catch (Exception e) {
+
+            System.out.println(e);
         }
-
-        return null;
-    }
-
-    String bookRoom(String customerName) {
-
-        Room r = findRoom(customerName);
-
-        if (r == null)
-            return "Customer Not Found";
-
-        if (!r.booked) {
-
-            r.booked = true;
-            return "Room Booked Successfully";
-        }
-
-        return "Room Already Booked";
-    }
-
-    String vacateRoom(String customerName) {
-
-        Room r = findRoom(customerName);
-
-        if (r == null)
-            return "Customer Not Found";
-
-        if (r.booked) {
-
-            r.booked = false;
-            return "Room Vacated Successfully";
-        }
-
-        return "Room Already Vacant";
     }
 }
